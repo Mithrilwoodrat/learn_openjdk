@@ -79,3 +79,4 @@ make JOBS=4
 来自 <https://hllvm-group.iteye.com/group/topic/26998>  
 ```
 
+HotSpot internals https://wiki.openjdk.java.net/display/HotSpot/Main
