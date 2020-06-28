@@ -2,6 +2,8 @@
 
 https://openjdk.java.net/groups/hotspot/docs/StorageManagement.html
 
+https://raw.githubusercontent.com/aragozin/sketchbook/download/Java%208%20-%20GC%20cheatsheet.pdf
+
 分代收集算法
 
 ## HotSpot 实现
@@ -29,6 +31,8 @@ hotspot/src/share/vm/gc_implementation/
 主动式中断： 使 GC 发生时所有线程都跑到最近的安全点。通过设置一个标志，各个线程执行时轮询该标志，发现标志为真时主动中断挂起。
 
 ## 垃圾收集器
+
+https://docs.oracle.com/javase/8//docs/technotes/guides/vm/gctuning/parallel.html#parallel_collector
 
 jdk1.7 默认垃圾收集器Parallel Scavenge（新生代）+Parallel Old（老年代）
 
@@ -71,3 +75,10 @@ Heap
  Metaspace       used 2156K, capacity 4480K, committed 4480K, reserved 1056768K
   class space    used 229K, capacity 384K, committed 384K, reserved 1048576K
 ```
+
+### Parallel Scavenge
+
+目标为达到可控的吞吐量 -- 吞吐量 = 运行用户代码时间 / (运行用户代码时间 + 运行垃圾收集时间)
+
+
+
