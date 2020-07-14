@@ -99,7 +99,7 @@ minor version: 0
 major version: 52
 ```
 
-### Constant Pool
+### 常量池 Constant Pool
 
 The constant_pool is a table of structures (§4.4) representing various string constants, class and interface names, field names, and other constants that are referred to within the ClassFile structure and its substructures. The format of each constant_pool table entry is indicated by its first "tag" byte.
 
@@ -232,4 +232,31 @@ CONSTANT_Utf8_info {
 ```
 
 拼接起来刚好为 `java/lang/Object."<init>":()V`。
+
+### Access Flags
+
+The value of the access_flags item is a mask of flags used to denote access permissions to and properties of this class or interface.  
+
+`access_flags` 的值代表了类或接口的访问信息，如 Class 为类还是接口，是否为 public、是否定义为 abstract、是否被声明为 final 等。
+
+使用 `javap -v` 可以查看 class 文件的 access_flags
+
+```
+javap -v Runtime/TestClass.class
+  flags: ACC_PUBLIC, ACC_SUPER
+```
+
+```
+Flag Name	Value	Interpretation
+ACC_PUBLIC	0x0001	Declared public; may be accessed from outside its package.
+ACC_FINAL	0x0010	Declared final; no subclasses allowed.
+ACC_SUPER	0x0020	Treat superclass methods specially when invoked by the invokespecial instruction.
+ACC_INTERFACE	0x0200	Is an interface, not a class.
+ACC_ABSTRACT	0x0400	Declared abstract; must not be instantiated.
+ACC_SYNTHETIC	0x1000	Declared synthetic; not present in the source code.
+ACC_ANNOTATION	0x2000	Declared as an annotation type.
+ACC_ENUM	0x4000	Declared as an enum type.
+```
+
+在上面的字节码为 `0x21` 
 
