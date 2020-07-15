@@ -2,7 +2,7 @@ package Runtime;
 
 import java.io.Serializable;
 
-public class TestClass{
+public class TestClass implements Serializable {
     private int m;
     private final int n = 1;
     private static long l = 2l;

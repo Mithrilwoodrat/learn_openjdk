@@ -258,5 +258,30 @@ ACC_ANNOTATION	0x2000	Declared as an annotation type.
 ACC_ENUM	0x4000	Declared as an enum type.
 ```
 
-在上面的字节码为 `0x21` 
+上面的 TestClass class 文件中对应 `access_flags` 的值为 `0x21`,  即 `0x20 & 0x01` ，对应 ACC_PUBLIC 和 ACC_SUPER。
+
+The ACC_SUPER flag indicates which of two alternative semantics is to be expressed by the invokespecial instruction (§invokespecial) if it appears in this class. Compilers to the instruction set of the Java Virtual Machine should set the ACC_SUPER flag.
+The ACC_SUPER flag exists for backward compatibility with code compiled by older compilers for the Java programming language. In Oracle’s JDK prior to release 1.0.2, the compiler generated ClassFile access_flags in which the flag now representing ACC_SUPER had no assigned meaning, and Oracle's Java Virtual Machine implementation ignored the flag if it was set.
+
+ACC_SUPER 所有 JDK 1.0.2 之后版本的 class 文件该都必须设置该标志。
+
+
+### this_class super_class & interfaces
+
+class 文件中接下来的 `this_class` `super_class` `interfaces_count` `interfaces[]` 为类的索引、父类索引、以及接口的索引。
+
+`this_class` 为常量池中指向当前类的索引值，对应的结构必须为 `CONSTANT_Class_info`。以 `TestClass.class` 为例，对应的值为 `00 09`，即索引为 9 的值，即 `#9 = Class #35 // Runtime/TestClass`。
+
+`super_class` 同样为class文件中类的唯一父类对应的常量池的索引(Java 不允许多继承，所以最多只有一个父类)，如果没有父类则该值为0(只有 java.lang.Object没有父类)。同样以 `TestClass.class` 为例，其值为 `00 0A`，对应常量池中的值为 `#10 = Class #36 // java/lang/Object`
+
+`interfaces_count` 字段描述该类实现了多少个接口。这些被实现的接口按 implements 语句的顺序从左到右排列(如果为接口则按 extends 语句从左到右排列)将对应常量池中的索引存放到 `interfaces[]` 中。
+
+如[TestCLassimplements.java](./TestCLassimplements.java) 中，对应的 `interfaces_count` 为1，`interfaces[0]` 为`0x0B`对应 ` #11 = Class #38 // java/io/Serializable`。
+
+而[TestCLass.java](./TestCLass.java) 中没有实现任何接口，所以其 `interfaces_count` 为0，`interfaces`为空不占空间。
+
+### fields_count & fields[] 字段表
+
+
+
 
