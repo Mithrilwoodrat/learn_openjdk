@@ -282,6 +282,71 @@ class 文件中接下来的 `this_class` `super_class` `interfaces_count` `inter
 
 ### fields_count & fields[] 字段表
 
+字段表用于描述类或者接口中的字段信息。
+
+使用 `javap -v -p` 可以查看类中的所有字段
+
+例如 [TestCLass.java](./TestCLass.java) 中的字段查看如下
+
+```
+  private int m;
+    descriptor: I
+    flags: ACC_PRIVATE
+
+  private final int n;
+    descriptor: I
+    flags: ACC_PRIVATE, ACC_FINAL
+    ConstantValue: int 1
+
+  private static long l;
+    descriptor: J
+    flags: ACC_PRIVATE, ACC_STATIC
+
+  private java.lang.String s;
+    descriptor: Ljava/lang/String;
+    flags: ACC_PRIVATE
+```
+
+在 class 文件中, `fields_count` 标记字段的数量。`field_info` 的结构如下
+
+```
+field_info {
+    u2             access_flags;
+    u2             name_index;
+    u2             descriptor_index;
+    u2             attributes_count;
+    attribute_info attributes[attributes_count];
+}
+```
+
+包含字段的作用域 access_flags:
+
+```
+Flag Name	Value	Interpretation
+ACC_PUBLIC	0x0001	Declared public; may be accessed from outside its package.
+ACC_PRIVATE	0x0002	Declared private; usable only within the defining class.
+ACC_PROTECTED	0x0004	Declared protected; may be accessed within subclasses.
+ACC_STATIC	0x0008	Declared static.
+ACC_FINAL	0x0010	Declared final; never directly assigned to after object construction (JLS §17.5).
+ACC_VOLATILE	0x0040	Declared volatile; cannot be cached.
+ACC_TRANSIENT	0x0080	Declared transient; not written or read by a persistent object manager. 不会被序列化
+ACC_SYNTHETIC	0x1000	Declared synthetic; not present in the source code.
+ACC_ENUM	0x4000	Declared as an element of an enum.
+```
+
+
+`name_index` 为字段简单名称在常量池中的索引，如 `private int m` 对应的值为 `0xB`，对应的常量为`m`。格式参考 [Unqualified Names](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.2.2)，不能包含` . ; [ /`中的字符。
+类方法名除了上述字符外，还不能包含`<>`(<init> <clinit> 两个方法除外)。(字段名和接口方法可以包含)
+
+关于`<init>` 和 `<clinit>` 函数也可以参考 jvm 文档[2.9. Special Methods](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-2.html#jvms-2.9)，其中 `<init>` 是实例初始化时调用的函数，如 `Persion p = new Persion()` 时会调用。而 `<clinit>` 则是类初始化函数,类的 static 块会被转换为 class initialization 函数。
+
+```
+public class A {
+    //<clinit>
+    static{ System.out.println("Static Initializing...");}
+}
+
+字段类型在常量池中的索引 `descriptor_index`， m 的描述符为 `I`, 
 
 
 
