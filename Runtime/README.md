@@ -319,6 +319,9 @@ field_info {
 }
 ```
 
+
+#### access_flags 作用域
+
 包含字段的作用域 access_flags:
 
 ```
@@ -334,6 +337,7 @@ ACC_SYNTHETIC	0x1000	Declared synthetic; not present in the source code.
 ACC_ENUM	0x4000	Declared as an element of an enum.
 ```
 
+#### name_index 字段名
 
 `name_index` 为字段简单名称在常量池中的索引，如 `private int m` 对应的值为 `0xB`，对应的常量为`m`。格式参考 [Unqualified Names](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.2.2)，不能包含` . ; [ /`中的字符。
 类方法名除了上述字符外，还不能包含`<>`(<init> <clinit> 两个方法除外)。(字段名和接口方法可以包含)
@@ -345,8 +349,61 @@ public class A {
     //<clinit>
     static{ System.out.println("Static Initializing...");}
 }
+```
 
-字段类型在常量池中的索引 `descriptor_index`， m 的描述符为 `I`, 
+更具体的可以参考[这篇文章](https://www.baeldung.com/jvm-init-clinit-methods)。
 
+#### descriptor_index 描述符
+
+字段类型在常量池中的索引 `descriptor_index`，例如 `private int m` 字段对应的的描述符索引在class文件中的偏移为`0x0000012A`，其值为 `0xC` 对应常量池中的 UTF-8 常量 `I`。
+
+描述符的定义参考[文档](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.3.2)，用于描述字段的数据类型、方法的参数列表和返回值。
+
+其遵循如下的语法
+
+```
+FieldDescriptor:
+    FieldType
+
+FieldType:
+    BaseType
+    ObjectType
+    ArrayType
+
+BaseType:
+    B
+    C
+    D
+    F
+    I
+    J
+    S
+    Z
+
+ObjectType:
+    L ClassName ;
+
+ArrayType:
+    [ ComponentType
+
+ComponentType:
+    FieldType
+```
+
+其中基础类型有下面几种 
+
+```
+BaseType Character	Type	Interpretation
+B	byte	signed byte
+C	char	Unicode character code point in the Basic Multilingual Plane, encoded with UTF-16
+D	double	double-precision floating-point value
+F	float	single-precision floating-point value
+I	int	integer
+J	long	long integer
+L ClassName ;	reference	an instance of class ClassName
+S	short	signed short
+Z	boolean	true or false
+[	reference	one array dimension
+```
 
 
