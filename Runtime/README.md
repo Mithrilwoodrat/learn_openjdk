@@ -322,7 +322,9 @@ field_info {
 
 #### access_flags 作用域
 
-包含字段的作用域 access_flags:
+The value of the access_flags item is a mask of flags used to denote access permission to and properties of this field
+
+字段的作用域 access_flags 用于描述字段的访问权限和属性。
 
 ```
 Flag Name	Value	Interpretation
@@ -336,6 +338,8 @@ ACC_TRANSIENT	0x0080	Declared transient; not written or read by a persistent obj
 ACC_SYNTHETIC	0x1000	Declared synthetic; not present in the source code.
 ACC_ENUM	0x4000	Declared as an element of an enum.
 ```
+
+ACC_PRIVATE, ACC_PROTECTED, ACC_PUBLIC 三个属性中只能选择其中一个。并且不能同时为  ACC_FINAL 和 ACC_VOLATILE。
 
 #### name_index 字段名
 
@@ -406,4 +410,44 @@ Z	boolean	true or false
 [	reference	one array dimension
 ```
 
+比如 `int` 变量的描述符为 `I`，而 `Object` 变量的描述符为 `LJava/lang/Object;`，
+多维 double 数组 `d[][][]` 的描述符则为 `[[[D`。
+
+#### attributes
+
+紧接着 `descriptor_index` 的为 `attributes_count` 即属性个数，在 `TestClass.class` 中第二个字段 `private final int n` 的 `attributes_count` 值为1，对应位置为 `0x133h`。
+
+而 attributes 数组中 [attribute_info](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.7) 格式如下
+
+```
+attribute_info {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u1 info[attribute_length];
+}
+```
+
+使用 010 editor 编辑器打开该 class 文件，加载推荐的 class 文件模板。
+
+可以看到变量 n 的属性如下
+
+![](../imgs/classfile-1.png)
+
+`attribute_name_index` 值为 14，对应 `ConstantValue`。可以看到不同的属性， info 字段对应的结构不同，
+
+ConstantValue 结构如下
+
+```
+ConstantValue_attribute {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u2 constantvalue_index;
+}
+```
+
+相当于将 `attribute_info` 中 `u1 info[attribute_length];` 字段解释为 `u2 constantvalue_index;`。 对应的值为 1。
+
+而剩下的 `private static long l = 2l;` 和 `private String s = "test";` 虽然有初始值，但因为没有 final 修饰，其 attribute 均为空。
+
+### 方法 methods_count & methods
 
