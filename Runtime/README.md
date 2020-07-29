@@ -511,3 +511,7 @@ ReturnDescriptor:
 VoidDescriptor:
     V
 ```
+
+开头括号中为参数的类型，括号外为返回值的类型，返回值为 Void 则为 V。
+
+例如方法 `Object m(int i, double d, Thread t) {..}` ，其描述符为 `(IDLjava/lang/Thread;)Ljava/lang/Object;`。
