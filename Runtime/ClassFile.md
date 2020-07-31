@@ -515,3 +515,9 @@ VoidDescriptor:
 开头括号中为参数的类型，括号外为返回值的类型，返回值为 Void 则为 V。
 
 例如方法 `Object m(int i, double d, Thread t) {..}` ，其描述符为 `(IDLjava/lang/Thread;)Ljava/lang/Object;`。
+
+#### attributes
+
+方法的属性和字段的属性结构一致，都是`attribute_info`。
+
+![](../imgs/classfile-2.png)
