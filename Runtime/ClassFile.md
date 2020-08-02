@@ -431,7 +431,7 @@ attribute_info {
 
 可以看到变量 n 的属性如下
 
-![](../imgs/classfile-1.png)
+![](../imgs/Runtime/classfile-1.png)
 
 `attribute_name_index` 值为 14，对应 `ConstantValue`。可以看到不同的属性， info 字段对应的结构不同，
 
@@ -473,7 +473,6 @@ ConstantValue_attribute {
 其中 `synchronized` 加锁使用，`native` 为原生方法， `strictfp` 跟浮点数相关， `abstract` 为抽象方法，字段不能为抽象，`varargs` 表示方法为变成参数。
 
 ```
-
 Flag Name	Value	Interpretation
 ACC_PUBLIC	0x0001	Declared public; may be accessed from outside its package.
 ACC_PRIVATE	0x0002	Declared private; accessible only within the defining class.
@@ -518,6 +517,63 @@ VoidDescriptor:
 
 #### attributes
 
-方法的属性和字段的属性结构一致，都是`attribute_info`。
+方法的属性和字段的属性结构一致，都是`attribute_info`。其结构参考 fields 部分。
 
-![](../imgs/classfile-2.png)
+方法的属性有下面几种:
+ * Code (§4.7.3) 字节码
+ * Exceptions (§4.7.5) 异常
+ * Synthetic (§4.7.8) A class member that does not appear in the source code
+ * Signature (§4.7.9) Signature 是有 Java 语言使用，JVM 中使用的是 Descriptor
+ * Deprecated (§4.7.15)
+ * RuntimeVisibleAnnotations (§4.7.16)
+ * RuntimeInvisibleAnnotations (§4.7.17)，RuntimeVisibleParameterAnnotations (§4.7.18), RuntimeInvisibleParameterAnnotations (§4.7.19), 和 AnnotationDefault (§4.7.20)
+
+方法 `Void <init>()` (描述符为 `<init>()V`) 的属性如下图，只有一个 Code 属性。
+
+![](../imgs/Runtime/classfile-2.png)
+
+Code_attribute 为变长结构，存储了方法对应的字节码，其结构如下
+
+```
+Code_attribute {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u2 max_stack;
+    u2 max_locals;
+    u4 code_length;
+    u1 code[code_length];
+    u2 exception_table_length;
+    {   u2 start_pc;
+        u2 end_pc;
+        u2 handler_pc;
+        u2 catch_type;
+    } exception_table[exception_table_length];
+    u2 attributes_count;
+    attribute_info attributes[attributes_count];
+}
+```
+
+`max_stack` 为方法对应的操作数栈在运行时最深的长度。 
+
+`max_locals` 为编译时计算出的局部变量的个数。
+
+`code_length` 为方法字节码的长度，虽然其最大值可以为 2^32-1，但 java 编译器默认能编译的最大长度为 65535。
+
+`Code_attribute` 具体值见下图
+
+![](../imgs/Runtime/classfile-3.png)
+
+
+### 属性 Attributes
+
+这部分的数据同样为 `attribute_info` 结构，JVM 所识别的属性如下:
+
+ * InnerClasses (§4.7.6) 
+ * EnclosingMethod (§4.7.7) 
+ * Synthetic (§4.7.8) 
+ * Signature(§4.7.9) 
+ * SourceFile (§4.7.10) 
+ * SourceDebugExtension (§4.7.11) 
+ * Deprecated (§4.7.15) RuntimeVisibleAnnotations (§4.7.16) RuntimeInvisibleAnnotations (§4.7.17) and BootstrapMethods (§4.7.21) attributes.
+
+ TestClass.java 的属性表中的数据为`SourceFile : TestClass.java`。
