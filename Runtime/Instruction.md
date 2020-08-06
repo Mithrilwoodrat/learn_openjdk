@@ -88,3 +88,37 @@ JVM 的字节码类型映射表如下，可以看到 byte、short、char 都没�
 表格使用 [TablesGenerator.com](https://www.tablesgenerator.com/markdown_tables#) 生成。
 
 
+# Load and Store Instructions 加载存储指令
+
+* Load: `iload` `iload_<n>`(iload_1 = iload)
+* Store: `istore, istore_<n>`
+* Load Const
+* 扩展访问的本地变量或者操作数 `wide`
+
+数组操作也会转换为操作数栈上的操作。
+
+# Arithmetic Instructions 算数指令
+
+* Add: iadd, ladd, fadd, dadd.
+
+* Subtract: isub, lsub, fsub, dsub.
+
+* Multiply: imul, lmul, fmul, dmul.
+
+* Divide: idiv, ldiv, fdiv, ddiv.
+
+* Remainder: irem, lrem, frem, drem.
+
+* Negate: ineg, lneg, fneg, dneg.
+
+* Shift: ishl, ishr, iushr, lshl, lshr, lushr.
+
+* Bitwise OR: ior, lor.
+
+* Bitwise AND: iand, land.
+
+* Bitwise exclusive OR: ixor, lxor.
+
+* Local variable increment: iinc.
+
+* Comparison: dcmpg, dcmpl, fcmpg, fcmpl, lcmp.
