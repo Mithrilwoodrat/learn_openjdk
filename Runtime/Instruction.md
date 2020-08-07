@@ -122,3 +122,13 @@ JVM 的字节码类型映射表如下，可以看到 byte、short、char 都没�
 * Local variable increment: iinc.
 
 * Comparison: dcmpg, dcmpl, fcmpg, fcmpl, lcmp.
+
+
+byte, short, char, boolean 都是和 int 共用指令。JVM 标准中并未规定溢出时应该如何处理。
+
+JVM 算术指令只会在 div 和 rem 除0时抛出 ArithmeticException 异常。
+
+浮点数运算遵守 IEEE 754 标准。
+
+对 long 类型做比较时按有符号处理，而浮点数比较时会按 IEEE 754 做 nonsignaling comparisons。
+
