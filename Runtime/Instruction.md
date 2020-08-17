@@ -132,3 +132,49 @@ JVM 算术指令只会在 div 和 rem 除0时抛出 ArithmeticException 异常�
 
 对 long 类型做比较时按有符号处理，而浮点数比较时会按 IEEE 754 做 nonsignaling comparisons。
 
+# Type Conversion Instructions 类型转行指令
+
+类型转换指令允许 JVM 数字类型之间的转换。用以弥补指令集正交性的不足。
+
+向上扩展支持的类型如下：
+
+* int to long, float, or double
+
+* long to float or double
+
+* float to double
+
+对应的指令为 `i2l, i2f, i2d, l2f, l2d, and f2d`，即 int to long 等的简写。向上扩展整形数字不会丢失精度，浮点数向上扩展时若为 FP-strict(参考[文档](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-2.html#jvms-2.8.2)) 则不会丢失精度，非 FP-strict 模式则可能会丢失整体大小信息。
+
+将 int、long 转换为 float，或者将 long 转行为 double 都可能会丢失精度。(丢失部分bit的数据，结果会按 IEEE 754 取整)
+
+整数扩展不会导致 run-time exception。
+
+byte、char、short 默认会扩展位 int，不需要指令显示扩展。
+
+
+JVM 也支持以下的向下转型：
+
+* int to byte, short, or char
+
+* long to int
+
+* float to int or long
+
+* double to int, long, or float
+
+向下转型的指令为 ` i2b, i2c, i2s, l2i, f2i, f2l, d2i, d2l,  d2f`。向下转型可能会得到不同大小、不同符号的结果，以及可能损失精度。 int 和 long 向下转型的时候只是简单的丢弃后N的bit。(JVM 整数是有符号以补码形式存储，丢弃一些bit后可能会导致符号变化)
+
+浮点数转为整数( int or long)时：
+ * 若浮点数值为 NaN，则转换后整数值为0.
+ * 若浮点数的值不是无限循环的，浮点数会按 IEEE 754 取整。
+ * 若值太小，则会转换为 int、long 的最小值(如 INTMAX)
+ * 若值太大，则会转换为 int、long 的最大值
+
+double 转换为 float 也遵守 IEEE 754 标准。
+
+无论什么情况，数值类型转换指令不会造成 RunTime Exception（不要和 IEEE 754 浮点数异常混淆）
+
+
+
+
