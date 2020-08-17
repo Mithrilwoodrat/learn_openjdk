@@ -173,7 +173,7 @@ JVM 也支持以下的向下转型：
 
 double 转换为 float 也遵守 IEEE 754 标准。
 
-无论什么情况，数值类型转换指令不会造成 RunTime Exception（不要和 IEEE 754 浮点数异常混淆）
+无论什么情况，数值类型转换指令不会造成 RunTime Exception（不要和 IEEE 754 浮点数异常混淆，参考[文档](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_handle.html)）
 
 
 
