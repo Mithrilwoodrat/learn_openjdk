@@ -176,5 +176,31 @@ double 转换为 float 也遵守 IEEE 754 标准。
 无论什么情况，数值类型转换指令不会造成 RunTime Exception（不要和 IEEE 754 浮点数异常混淆，参考[文档](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_handle.html)）
 
 
+# Object Creation and Manipulation 对象创建与操作
+
+对象实例(class instance)和数组都属于 objects，但在 JVM 中他们有不同的操作指令。
+
+* Create a new class instance: `new`.
+
+* Create a new array: `newarray`, `anewarray`, `multianewarray`.
+
+* Access fields of classes (static fields, known as class variables) and fields of class instances (non-static fields, known as instance variables): `getfield`, `putfield`, `getstatic`, `putstatic`.
+
+* 从数组加载到操作数栈 Load an array component onto the operand stack: `baload, caload, saload, iaload, laload, faload, daload, aaload`.
+
+* Store a value from the operand stack as an array component: bastore, castore, sastore, iastore, lastore, fastore, dastore, aastore.
+
+* Get the length of array: arraylength.
+
+* Check properties of class instances or arrays: instanceof, checkcast.
+
+# Operand Stack Management Instructions 操作数栈管理
+
+* 出栈 pop, pop2, 
+* 复制栈顶 `dup, dup2, dup_x1, dup2_x1, dup_x2, dup2_x2` 。参考[文档](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-6.html#jvms-6.5.dup)
+* 交换 `swap` , swap the top two operand stack values
+
+
+
 
 
