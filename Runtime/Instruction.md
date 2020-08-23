@@ -200,6 +200,51 @@ double 转换为 float 也遵守 IEEE 754 标准。
 * 复制栈顶 `dup, dup2, dup_x1, dup2_x1, dup_x2, dup2_x2` 。参考[文档](https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-6.html#jvms-6.5.dup)
 * 交换 `swap` , swap the top two operand stack values
 
+# Control Transfer Instructions 控制流指令
+
+JVM 支持有条件跳转和无条件跳转
+
+* Conditional branch: `ifeq, ifne, iflt, ifle, ifgt, ifge, ifnull, ifnonnull, if_icmpeq, if_icmpne, if_icmplt, if_icmple, if_icmpgt if_icmpge, if_acmpeq, if_acmpne`.
+
+* Compound conditional branch: `tableswitch, lookupswitch`.
+
+* Unconditional branch: `goto, goto_w, jsr, jsr_w, ret`.
+
+JVM 指令除了支持 int 和 refrence 比较外，还有专门的指令支持和 null 比较。
+
+比较跳转指令都以 int 作为基准，short、char、bool 会直接当作 int 处理。而 long、float、double 则会调用比较指令返回 int 到栈顶后在调用条件跳转。(Comparison: dcmpg, dcmpl, fcmpg, fcmpl, lcmp.)
+
+
+# Method Invocation and Return Instructions 方法调用和return指令
+
+JVM 支持以下 5 种调用函数的指令
+
+* `invokevirtual` invokes an instance method of an object, dispatching on the (virtual) type of the object. This is the normal method dispatch in the Java programming language.
+
+* `invokeinterface` invokes an interface method, searching the methods implemented by the particular run-time object to find the appropriate method.
+
+* `invokespecial` invokes an instance method requiring special handling, whether an instance initialization method (§2.9), a private method, or a superclass method.
+
+* `invokestatic` invokes a class (static) method in a named class.
+
+* `invokedynamic` invokes the method which is the target of the call site object bound to the invokedynamic instruction. The call site object was bound to a specific lexical occurrence of the invokedynamic instruction by the Java Virtual Machine as a result of running a bootstrap method before the first execution of the instruction. Therefore, each occurrence of an invokedynamic instruction has a unique linkage state, unlike the other instructions which invoke methods. 其他指令调用流程由 JVM 指定，该指令可以由用户修改。在 JVM 上实现动态语言以及 lambda 表达式等需要用到该指令。详情可以参考 JRuby 作者的[博客](http://blog.headius.com/2008/09/first-taste-of-invokedynamic.html)
+
+
+# Throwing Exceptions 抛出异常
+
+异常在 JVM 中可以使用 `athorw` 指令抛出，也可以在使用其他指令遇到异常的情况下由 JVM 抛出。
+
+处理异常现在不是由 JVM 指令完成而是由异常表来处理。
+
+
+# Synchronization 同步指令
+
+JVM 支持给方法加锁以及给方法内的一串指令加锁。这两种都是通过 `monitor` (监视器) 实现。
+
+方法级的同步是通过调用和返回隐式实现的，一个 synchronized 方法通过常量池中的 method_info 结构里 `ACC_SYNCHRONIZED` 标志在运行时可以被识别，在方法调用时 JVM 会检查该标志位。如果设置过，执行方法的线程会进入 `monitor` 再调用方法代码，无论方法正常退出还是抛出了异常，只要方法线程持有 `monitor` ，就没有其他的方法能够获取。如果 synchronized 方法抛出了异常而该方法没有捕获该异常， `monitor` 会自动在异常抛出方法前退出。
+
+指令序列中的同步通常使用 `monitorenter` 和 `monitorexit` 指令实现。要正确实现需要 JVM 和 javac java编译器的配合。
+
 
 
 

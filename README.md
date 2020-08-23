@@ -1,6 +1,18 @@
 # learn_openjdk
 学习 openjdk 的代码和笔记
 
+主要参考 
+  * 《深入理解 Java 虚拟机》
+  * [The Java® Virtual Machine Specification](https://docs.oracle.com/javase/specs/jvms/se14/html/index.html)
+  * [HotSpot internals](https://wiki.openjdk.java.net/display/HotSpot/Main)
+
+以及 openjdk 的代码
+
+## 目录
+
+* Runtime 主要参考 JVM spec，记录 Java 的编译(生成 class)、链接加载(class文件加载) 以及 class 文件结构和字节码。 
+* Tools
+
 ## Build jdk
 
 `git clone https://github.com/AdoptOpenJDK/openjdk-jdk8u.git`
@@ -78,5 +90,3 @@ make JOBS=4
 
 来自 <https://hllvm-group.iteye.com/group/topic/26998>  
 ```
-
-HotSpot internals https://wiki.openjdk.java.net/display/HotSpot/Main
