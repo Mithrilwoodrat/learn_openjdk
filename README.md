@@ -13,29 +13,6 @@
 * Runtime 主要参考 JVM spec，记录 Java 的编译(生成 class)、链接加载(class文件加载) 以及 class 文件结构和字节码。 
 * Tools
 
-## Build jdk
-
-`git clone https://github.com/AdoptOpenJDK/openjdk-jdk8u.git`
-
-### Install Requirements
-
-Ubuntu:
-
-```
-sudo apt-get install libx11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev 
-
-sudo apt-get install -y libnx-x11-dev 
-
-sudo apt-get install -y libcups2-dev libfreetype6-dev libasound2-dev libfontconfig1-dev 
-```
-
-### config 
-
-```
-./configure  --enable-debug 
-make JOBS=4 
-```
-
 ### Spec
 
 <https://docs.oracle.com/javase/specs/jvms/se8/html/index.html>
