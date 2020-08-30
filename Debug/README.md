@@ -35,6 +35,12 @@ make JOBS=4
 
 更多的 config 参数可以参考 openjdk [文档](https://hg.openjdk.java.net/jdk-updates/jdk9u/raw-file/tip/common/doc/building.html#jdk-8-on-windows)
 
+更新，使用 slowdebug 时 hotspot 的 debug 信息会压缩到一个 libjvm.diz 文件里，使用起来不方便，可以使用 `disable-zip-debug-info` 禁用:
+
+```
+./configure --with-debug-level=slowdebug --with-target-bits=64 --disable-zip-debug-info
+```
+
 ## debug
 
 安装 eclipse cdt 以及 msys2 
@@ -262,6 +268,8 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
 * 2    Thread 0x7ffffdc30700 (LWP 501) "java-debug" JavaMain (_args=0x7ffffffea9b0) at jdk/src/share/bin/java.c:356
 ```
 
+### JavaMain
+
 可以看到这时候线程2已经运行到了 JavaMain 中。首先调用 InitializeJVM 初始化 JVM，该函数会调用到 `hotspot/src/share/vm/prims/jni.cpp:JNI_CreateJavaVM`，使用 Atomic 保证只有一个线程能调用该函数(mutex无法跨线程上锁)，JVM 真正的初始化是从该函数开始的。
 
 ```
@@ -344,4 +352,49 @@ JavaMain(void * _args)
     ret = (*env)->ExceptionOccurred(env) == NULL ? 0 : 1;
     LEAVE();
 }
+```
+
+
+```
+`InitializeJVM`
+
+r = ifn->CreateJavaVM(pvm, (void **)penv, &args);
+
+_JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, void *args) {
+    jint result = JNI_ERR;
+    DT_RETURN_MARK(CreateJavaVM, jint, (const jint&)result);
+
+    //使用 Atomic 保证只有一个线程能调用该函数(mutex无法跨线程上锁)
+    if (Atomic::xchg(1, &vm_created) == 1) {
+        return JNI_EEXIST;   // already created, or create attempt in progress
+    }
+    if (Atomic::xchg(0, &safe_to_recreate_vm) == 0) {
+        return JNI_ERR;  // someone tried and failed and retry not allowed.
+    }
+
+    assert(vm_created == 1, "vm_created is true during the creation");
+
+    ....
+    // 调用 create_vm
+    result = Threads::create_vm((JavaVMInitArgs*) args, &can_try_again);
+  if (result == JNI_OK) {
+    JavaThread *thread = JavaThread::current();
+    /* thread is thread_in_vm here */
+    *vm = (JavaVM *)(&main_vm);
+    *(JNIEnv**)penv = thread->jni_environment();
+
+    // Tracks the time application was running before GC
+    RuntimeService::record_application_start();
+
+    // Notify JVMTI
+    if (JvmtiExport::should_post_thread_life()) {
+       JvmtiExport::post_thread_start(thread);
+    }
+
+    EventThreadStart event;
+    if (event.should_commit()) {
+      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.commit();
+    }
+
 ```
