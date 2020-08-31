@@ -354,12 +354,16 @@ JavaMain(void * _args)
 }
 ```
 
+#### InitializeJVM
+
+
+`r = ifn->CreateJavaVM(pvm, (void **)penv, &args);`
+
+调用 JNI 中的 CreateJavaVM 会继续调用 `hotspot/src/share/vm/runtime/thread.cpp` 中的 `create_vm`。
+
+create_vm 主要步骤为初始化 os 模块，ostream模块，绑定主线程，加载 javaagent，初始化 JVM 同步机制，创建VM 主线程，加载异常类和 compile 类等等。
 
 ```
-`InitializeJVM`
-
-r = ifn->CreateJavaVM(pvm, (void **)penv, &args);
-
 _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, void *args) {
     jint result = JNI_ERR;
     DT_RETURN_MARK(CreateJavaVM, jint, (const jint&)result);
@@ -396,5 +400,130 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
       event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
       event.commit();
     }
+```
+
+在执行完 InitialzeJVM 后 gdb 中可以看到 20 个线程
 
 ```
+1    Thread 0x7fffff390e00 (LWP 25823) "java-debug"      
+  2    Thread 0x7ffffdc30700 (LWP 25838) "java-debug"      JavaMain (_args=0x7ffffffea9b0) at java.c:381
+  .....
+  11   Thread 0x7fffe21f0700 (LWP 25847) "VM Thread"       
+  12   Thread 0x7fffe20e0700 (LWP 25848) "Reference Handl" 
+  13   Thread 0x7fffe1fd0700 (LWP 25849) "Finalizer"       
+  14   Thread 0x7fffe1a40700 (LWP 25850) "Signal Dispatch" 
+  15   Thread 0x7fffe1930700 (LWP 25851) "C2 CompilerThre" 
+  16   Thread 0x7fffe1820700 (LWP 25852) "C2 CompilerThre" 
+  17   Thread 0x7fffe1710700 (LWP 25853) "C2 CompilerThre" 
+  18   Thread 0x7fffe1600700 (LWP 25854) "C1 CompilerThre" 
+  19   Thread 0x7fffe14f0700 (LWP 25855) "Service Thread"  
+  20   Thread 0x7fffe13e0700 (LWP 25856) "VM Periodic Tas" 
+```
+
+其中 C2 线程数由 JVM 自身决定。
+
+#### LoadMainClass
+
+初始化好 JVM 虚拟机后便是加载 MainClass，通过 JNI GetStaticMethodID 函数调用对应的 java 代码。
+
+```
+/*
+ * Loads a class and verifies that the main class is present and it is ok to
+ * call it for more details refer to the java implementation.
+ */
+static jclass
+LoadMainClass(JNIEnv *env, int mode, char *name)
+{
+    jmethodID mid;
+    jstring str;
+    jobject result;
+    jlong start, end;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK0(cls);
+
+    NULL_CHECK0(mid = (*env)->GetStaticMethodID(env, cls,
+                "checkAndLoadMain",
+                "(ZILjava/lang/String;)Ljava/lang/Class;"));
+
+    str = NewPlatformString(env, name);
+    CHECK_JNI_RETURN_0(
+        result = (*env)->CallStaticObjectMethod(
+            env, cls, mid, USE_STDERR, mode, str));
+    
+    .....
+
+    return (jclass)result;
+}
+```
+
+`jdk/src/share/classes/sun/launcher/LauncherHelper.java:checkAndLoadMain`
+
+checkAndLoadMain Java代码会判断是 -jar 还是直接load class 文件，如果是 jar 则从 jar 包中找到 MainClass。然后调用 loadclass 方法加载。
+
+```
+    /**
+     * This method does the following:
+     * 1. gets the classname from a Jar's manifest, if necessary
+     * 2. loads the class using the System ClassLoader
+     * 3. ensures the availability and accessibility of the main method,
+     *    using signatureDiagnostic method.
+     *    a. does the class exist
+     *    b. is there a main
+     *    c. is the main public
+     *    d. is the main static
+     *    e. does the main take a String array for args
+     * 4. if no main method and if the class extends FX Application, then call
+     *    on FXHelper to determine the main class to launch
+     * 5. and off we go......
+     *
+     * @param printToStderr if set, all output will be routed to stderr
+     * @param mode LaunchMode as determined by the arguments passed on the
+     * command line
+     * @param what either the jar file to launch or the main class when using
+     * LM_CLASS mode
+     * @return the application's main class
+     */
+    public static Class<?> checkAndLoadMain(boolean printToStderr,
+                                            int mode,
+                                            String what) {
+        initOutput(printToStderr);
+        // get the class name
+        String cn = null;
+        switch (mode) {
+            case LM_CLASS:
+                cn = what;
+                break;
+            case LM_JAR:
+                cn = getMainClassFromJar(what);
+                break;
+            default:
+                // should never happen
+                throw new InternalError("" + mode + ": Unknown launch mode");
+        }
+        cn = cn.replace('/', '.');
+        Class<?> mainClass = null;
+        try {
+            mainClass = scloader.loadClass(cn);
+        } catch (NoClassDefFoundError | ClassNotFoundException cnfe) {
+            if (System.getProperty("os.name", "").contains("OS X"){
+                .....
+            } else {
+                abort(cnfe, "java.launcher.cls.error1", cn);
+            }
+        }
+        // set to mainClass
+        appClass = mainClass;
+
+        /*
+         * Check if FXHelper can launch it using the FX launcher. In an FX app,
+         * /
+
+        validateMainClass(mainClass);
+        return mainClass;
+    }
+
+```
+
+scloader 的初始化语句为 `private static final ClassLoader scloader = ClassLoader.getSystemClassLoader();`
+
+可以看出 Java 中加载 MainClass 是由 Java 代码实现，默认为 SystemClassLoader。
