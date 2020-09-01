@@ -473,16 +473,6 @@ checkAndLoadMain Java代码会判断是 -jar 还是直接load class 文件，如
      *    d. is the main static
      *    e. does the main take a String array for args
      * 4. if no main method and if the class extends FX Application, then call
-     *    on FXHelper to determine the main class to launch
-     * 5. and off we go......
-     *
-     * @param printToStderr if set, all output will be routed to stderr
-     * @param mode LaunchMode as determined by the arguments passed on the
-     * command line
-     * @param what either the jar file to launch or the main class when using
-     * LM_CLASS mode
-     * @return the application's main class
-     */
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
                                             String what) {
@@ -526,4 +516,108 @@ checkAndLoadMain Java代码会判断是 -jar 还是直接load class 文件，如
 
 scloader 的初始化语句为 `private static final ClassLoader scloader = ClassLoader.getSystemClassLoader();`
 
-可以看出 Java 中加载 MainClass 是由 Java 代码实现，默认为 SystemClassLoader。
+对应 `jdk/src/share/classes/java/lang/ClassLoader` 类
+
+```
+public Class<?> loadClass(String name) throws ClassNotFoundException {
+        return loadClass(name, false);
+    }
+
+
+// 可以看到 loadClass 函数默认是先调用 parent 的 loadClass，若
+// parent 不存在即为 SystemClassLoader,则进入 findBootstrapClassOrNull。
+// 还找不到的话会调用 findClass 继续查找
+
+protected Class<?> loadClass(String name, boolean resolve)
+        throws ClassNotFoundException
+    {
+        synchronized (getClassLoadingLock(name)) {
+            // First, check if the class has already been loaded
+            Class<?> c = findLoadedClass(name);
+            if (c == null) {
+                long t0 = System.nanoTime();
+                try {
+                    if (parent != null) {
+                        c = parent.loadClass(name, false);
+                    } else {
+                        c = findBootstrapClassOrNull(name);
+                    }
+                } catch (ClassNotFoundException e) {
+                    // ClassNotFoundException thrown if class not found
+                    // from the non-null parent class loader
+                }
+
+                if (c == null) {
+                    // If still not found, then invoke findClass in order
+                    // to find the class.
+                    long t1 = System.nanoTime();
+                    c = findClass(name);
+
+                    // this is the defining class loader; record the stats
+                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                    sun.misc.PerfCounter.getFindClasses().increment();
+                }
+            }
+            if (resolve) {
+                resolveClass(c);
+            }
+            return c;
+        }
+    }
+```
+
+默认的 SystemClassLoader 即上述 ClassLoader 基类最会调用 `findBootstrapClassOrNull` 最后会调用 `findBootstrapClass` JNI 方法。
+
+```
+private Class<?> findBootstrapClassOrNull(String name)
+{
+    if (!checkName(name)) return null;
+
+    return findBootstrapClass(name);
+}
+// return null if not found
+private native Class<?> findBootstrapClass(String name);
+```
+
+#### findBootstrapClass
+
+findBootstrapClass JNI 调用对应函数 `jdk/src/share/native/java/lang/ClassLoader.c:Java_java_lang_ClassLoader_findBootstrapClass`
+
+```
+/*
+ * Returns NULL if class not found.
+ */
+JNIEXPORT jclass JNICALL
+Java_java_lang_ClassLoader_findBootstrapClass(JNIEnv *env, jobject loader,
+                                              jstring classname)
+{
+    char *clname;
+    jclass cls = 0;
+    char buf[128];
+
+    if (classname == NULL) {
+        return 0;
+    }
+
+    clname = getUTF(env, classname, buf, sizeof(buf));
+    if (clname == NULL) {
+        JNU_ThrowOutOfMemoryError(env, NULL);
+        return NULL;
+    }
+    VerifyFixClassname(clname);
+
+    if (!VerifyClassname(clname, JNI_TRUE)) {  /* expects slashed name */
+        goto done;
+    }
+
+    cls = JVM_FindClassFromBootLoader(env, clname);
+
+ done:
+    if (clname != buf) {
+        free(clname);
+    }
+
+    return cls;
+}
+```
